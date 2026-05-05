@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Sinh viên Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 40px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1000px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        
+        /* Table Style */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        
+        /* Input & Button */
+        input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
+        input:focus { border-color: var(--primary); }
+        button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+        .btn-edit { background: #e0e7ff; color: var(--primary); }
+        .btn-delete { background: #fee2e2; color: var(--danger); }
+        .btn-save { background: var(--primary); color: white; width: 100%; margin-top: 15px; }
+
+        /* MODAL STYLE (Phần quan trọng nhất) */
+        .modal {
+            display: none; 
+            position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: white; margin: 10% auto; padding: 25px; width: 400px; 
+            border-radius: 12px; position: relative; animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from {transform: translateY(-50px); opacity: 0;} to {transform: translateY(0); opacity: 1;} }
+        
+        .modal-content h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .form-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .close-modal { position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 20px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Danh sách sinh viên</h2>
+    <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <input id="searchName" placeholder="Nhập tên cần tìm..." style="flex: 1;">
+        <button onclick="search()" style="background: var(--primary); color: white;">Tìm kiếm</button>
+    </div>
+
+    <table id="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tên</th>
+                <th>Tuổi</th>
+                <th>Email</th>
+                <th>Giới tính</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <h2 style="margin-top: 40px;">Thêm sinh viên</h2>
+    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; background: #f1f5f9; padding: 20px; border-radius: 8px;">
+        <input id="addId" placeholder="Mã SV (ID)">
+        <input id="name" placeholder="Họ tên">
+        <input id="age" placeholder="Tuổi" type="number">
+        <input id="email" placeholder="Email">
+        <input id="gender" placeholder="Giới tính">
+        <button onclick="add()" style="background: var(--success); color: white; grid-column: span 2; margin-top: 10px;">Thêm mới</button>
+    </div>
+</div>
+
+<!-- MODAL SỬA SINH VIÊN -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <h3>Chỉnh sửa thông tin</h3>
+        <div class="form-group">
+            <input id="editId" hidden> <!-- ID ẩn -->
+            <label>Họ tên:</label>
+            <input id="editName">
+            <label>Tuổi:</label>
+            <input id="editAge" type="number">
+            <label>Email:</label>
+            <input id="editEmail">
+            <label>Giới tính:</label>
+            <input id="editGender">
+            <button class="btn-save" onclick="updateStudent()">Cập nhật thay đổi</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const api = "http://localhost:8080/students";
+
+    function load() {
+        fetch(api).then(res => res.json()).then(data => {
+            let rows = "";
+            data.forEach(s => {
+                rows += `
+                <tr>
+                    <td>${s.id}</td>
+                    <td><b>${s.name}</b></td>
+                    <td>${s.age}</td>
+                    <td>${s.email}</td>
+                    <td>${s.gender}</td>
+                    <td>
+                        <button class="btn-edit" onclick="openEditModal('${s.id}','${s.name}',${s.age},'${s.email}','${s.gender}')">Sửa</button>
+                        <button class="btn-delete" onclick="deleteStudent('${s.id}')">Xóa</button>
+                    </td>
+                </tr>`;
+            });
+            document.querySelector("#table tbody").innerHTML = rows;
+        });
+    }
+
+    load();
+
+    // Mở Modal và đổ dữ liệu cũ vào các ô input
+    function openEditModal(id, name, age, email, gender) {
+        document.getElementById("editId").value = id;
+        document.getElementById("editName").value = name;
+        document.getElementById("editAge").value = age;
+        document.getElementById("editEmail").value = email;
+        document.getElementById("editGender").value = gender;
+        document.getElementById("editModal").style.display = "block";
+    }
+
+    function closeModal() {
+        document.getElementById("editModal").style.display = "none";
+    }
+
+    // Gửi yêu cầu cập nhật về Server
+    function updateStudent() {
+        const id = document.getElementById("editId").value;
+        const data = {
+            name: document.getElementById("editName").value,
+            age: document.getElementById("editAge").value,
+            email: document.getElementById("editEmail").value,
+            gender: document.getElementById("editGender").value
+        };
+
+        fetch(api + "/update/" + id, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        })
+        .then(() => {
+            closeModal();
+            load();
+        });
+    }
+
+    function add() {
+        fetch(api, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id: document.getElementById("addId").value,
+                name: document.getElementById("name").value,
+                age: document.getElementById("age").value,
+                email: document.getElementById("email").value,
+                gender: document.getElementById("gender").value
+            })
+        }).then(() => load());
+    }
+
+    function deleteStudent(id) {
+        if(confirm("Xóa sinh viên này?")) {
+            fetch(api + "/delete/" + id, { method: "POST" }).then(() => load());
+        }
+    }
+
+    function search() {
+        let name = document.getElementById("searchName").value;
+        fetch(api + "/search?name=" + name)
+            .then(res => res.json())
+            .then(data => {
+                let rows = "";
+                data.forEach(s => {
+                    rows += `<tr><td>${s.id}</td><td>${s.name}</td><td>${s.age}</td><td>${s.email}</td><td>${s.gender}</td><td><button onclick="load()">Quay lại</button></td></tr>`;
+                });
+                document.querySelector("#table tbody").innerHTML = rows;
+            });
+    }
+
+    // Đóng modal khi click ra ngoài vùng trắng
+    window.onclick = function(event) {
+        if (event.target == document.getElementById("editModal")) closeModal();
+    }
+</script>
+</body>
+</html>
