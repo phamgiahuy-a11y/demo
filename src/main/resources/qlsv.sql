@@ -1,17 +1,11 @@
-CREATE DATABASE qlsv;
-GO
 
-USE qlsv;
-GO
-
-CREATE TABLE students (
+CREATE TABLE IF NOT EXISTS students (
     id VARCHAR(10) PRIMARY KEY,
     name NVARCHAR(100),
     age INT,
     email VARCHAR(100),
     gender NVARCHAR(10)
 );
-GO
 
 INSERT INTO students VALUES ('SV01',N'Nguyễn Văn An',20,'an@gmail.com',N'Nam');
 INSERT INTO students VALUES ('SV02',N'Trần Thị Bích',21,'bich@gmail.com',N'Nữ');
@@ -34,4 +28,3 @@ INSERT INTO students VALUES ('SV17',N'Trần Văn Sơn',21,'son@gmail.com',N'Nam
 INSERT INTO students VALUES ('SV18',N'Lê Thị Thảo',22,'thao@gmail.com',N'Nữ');
 INSERT INTO students VALUES ('SV19',N'Phạm Văn Tuấn',23,'tuan@gmail.com',N'Nam');
 INSERT INTO students VALUES ('SV20',N'Hoàng Thị Yến',20,'yen@gmail.com',N'Nữ');
-GO
