@@ -1,8 +1,3 @@
-CREATE DATABASE qlsv;
-GO
-
-USE qlsv;
-GO
 
 CREATE TABLE students (
     id VARCHAR(10) PRIMARY KEY,
