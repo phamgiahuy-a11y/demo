@@ -1,5 +1,5 @@
 
-CREATE TABLE students (
+CREATE TABLE IF NOT EXISTS students (
     id VARCHAR(10) PRIMARY KEY,
     name NVARCHAR(100),
     age INT,
